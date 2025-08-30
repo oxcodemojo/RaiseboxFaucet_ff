@@ -1,4 +1,4 @@
-//SPDX-Lincense-Identifier: MIT
+// SPDX-Lincense-Identifier: MIT
 pragma solidity ^0.8.30;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -15,7 +15,7 @@ contract RaiseBoxFaucet is ERC20, Ownable {
 
     uint256 public constant DAILY_CLAIM_LIMIT = 100;
 
-    uint256 public constant FAUCET_DRIP = 1000 * 10 ** 18; // assuming 18 decimals... 1k tokens
+    uint256 public faucetDrip; //= 1000 * 10 ** 18; // assuming 18 decimals... 1k tokens
 
     uint256 public constant INITIAL_SUPPLY = 1000000000 * 10 ** 18;
 
@@ -23,21 +23,44 @@ contract RaiseBoxFaucet is ERC20, Ownable {
 
     uint256 public dailyDrips;
 
+    uint256 sepEthAmountToDrip; //= 0.01 ether;
+
     bool public sepEthDripsPaused;
 
     uint256 public dailyClaimCount;
 
+    uint256 public dailySepEthCap;
+
     address private raiseBoxFaucetOwner;
+
+    // -----------------------------------------------------------------------
+    // CONSTRUCTOR
+    // -----------------------------------------------------------------------
+
+    /// @param name_ Name of the ERC20 token
+    /// @param symbol_ Symbol of the ERC20 token
+    /// @param faucetDrip_ Number of tokens dispensed per claim
+    /// @param sepEthDrip_ Amount of Sepolia ETH dripped per first-time claim
+    /// @param dailySepEthCap_ Maximum Sepolia ETH distributed per day
 
     constructor(
         string memory name_,
-        string memory symbol_
+        string memory symbol_,
+        uint256 faucetDrip_,
+        uint256 sepEthDrip_,
+        uint256 dailySepEthCap_
     ) ERC20(name_, symbol_) Ownable(msg.sender) {
         raiseBoxFaucetOwner = msg.sender;
-        _mint(address(this), INITIAL_SUPPLY); // mint initial suppply to contract on deployment
+        faucetDrip = faucetDrip_;
+        sepEthAmountToDrip = sepEthDrip_;
+        dailySepEthCap = dailySepEthCap_;
+
+        _mint(address(this), INITIAL_SUPPLY); // mint initial supply to contract on deployment
     }
 
+    // -----------------------------------------------------------------------
     // EVENTS
+    // -----------------------------------------------------------------------
 
     event SepEthDripped(address indexed claimant, uint256 amount);
     event SepEthDripSkipped(address indexed claimant, string reason);
@@ -48,23 +71,31 @@ contract RaiseBoxFaucet is ERC20, Ownable {
     event Claimed(address indexed user, uint256 amount);
     event MintedNewFaucetTokens(address indexed user, uint256 amount);
 
-    //ERRORS
+    // -----------------------------------------------------------------------
+    // ERRORS
+    // -----------------------------------------------------------------------
 
     error RaiseBoxFaucet_EthTransferFailed();
     error RaiseBoxFaucet_CannotClaimAnymoreFaucetToday();
     error RaiseBoxFaucet_FaucetNotOutOfTokens();
     error RaiseBoxFaucet_MiningToNonContractAddressFailed();
 
-    // CLAAIM ERRORS
+    // CLAIM ERRORS
 
     error RaiseBoxFaucet_ClaimCooldownOn();
     error RaiseBoxFaucet_OwnerOrZeroOrContractAddressCannotCallClaim();
     error RaiseBoxFaucet_DailyClaimLimitReached();
     error RaiseBoxFaucet_InsufficientContractBalance();
 
-    // MODIFIERS
+    // -----------------------------------------------------------------------
+    // OWNER FUNCTIONS
+    // -----------------------------------------------------------------------
 
-    // mint new tokens
+    /// @notice Mints new faucet tokens to the contract
+    /// @dev Can only mint to the contract itself
+    /// @param to Address that will receive minted tokens (must be the contract itself)
+    /// @param amount Number of tokens to mint
+
     function mintFaucetTokens(address to, uint256 amount) public onlyOwner {
         if (to != address(this)) {
             revert RaiseBoxFaucet_MiningToNonContractAddressFailed();
@@ -79,10 +110,13 @@ contract RaiseBoxFaucet is ERC20, Ownable {
         emit MintedNewFaucetTokens(to, amount);
     }
 
-    // burn tokens...
+    /// @notice Burns faucet tokens held by the contract
+    /// @dev Transfers tokens to owner first, then burns from owner
+    /// @param amountToBurn Amount of tokens to burn
+
     function burnFaucetTokens(uint256 amountToBurn) public onlyOwner {
         require(
-            amountToBurn >= balanceOf(address(this)),
+            amountToBurn <= balanceOf(address(this)),
             "Faucet Token Balance: Insufficient"
         );
 
@@ -94,17 +128,18 @@ contract RaiseBoxFaucet is ERC20, Ownable {
     }
 
     // claim tokens
-    /// @notice SENDS BOTH FAUCET TOKENS AND SEP ETH (TO FIRST TIME USERS) IN ONE TRANSACTION OR CALL
+    /// @notice Claims faucet tokens and optionally Sepolia ETH (for first-time claimers)
     /// @notice Allows users to claim tokens with a cooldown period
-    /// @notice Drips 0.005 sepolia ether to first time claimers
+    /// @notice Drips 0.01 sepolia ether to first time claimers
     /// @notice sepolia drip is to serve as gas when using faucet tokens to interact with crowdfund contract
+    /// @dev Enforces cooldown, claim limits, daily ETH caps. Uses Checks-Effects-Interactions.
     /// @dev Transfers tokens directly from contract, checks balance and caller, follows Checks-Effects-Interactions
 
     function claimFaucetTokens() public {
         // Checks
         address faucetClaimer = msg.sender;
 
-        (lastClaimTime[faucetClaimer] == 0);
+        // (lastClaimTime[faucetClaimer] == 0);
 
         if (block.timestamp < (lastClaimTime[faucetClaimer] + CLAIM_COOLDOWN)) {
             revert RaiseBoxFaucet_ClaimCooldownOn();
@@ -118,11 +153,11 @@ contract RaiseBoxFaucet is ERC20, Ownable {
             revert RaiseBoxFaucet_OwnerOrZeroOrContractAddressCannotCallClaim();
         }
 
-        if (balanceOf(address(this)) <= FAUCET_DRIP) {
+        if (balanceOf(address(this)) <= faucetDrip) {
             revert RaiseBoxFaucet_InsufficientContractBalance();
         }
 
-        if (dailyClaimCount > DAILY_CLAIM_LIMIT) {
+        if (dailyClaimCount >= DAILY_CLAIM_LIMIT) {
             revert RaiseBoxFaucet_DailyClaimLimitReached();
         }
 
@@ -137,10 +172,8 @@ contract RaiseBoxFaucet is ERC20, Ownable {
                 dailyClaimCount = 0;
             }
 
-            uint256 sepEthAmountToDrip = 0.01 ether;
-
             if (
-                dailyDrips + sepEthAmountToDrip <= 1 ether &&
+                dailyDrips + sepEthAmountToDrip <= dailySepEthCap &&
                 address(this).balance >= sepEthAmountToDrip
             ) {
                 hasClaimedEth[faucetClaimer] = true;
@@ -171,19 +204,15 @@ contract RaiseBoxFaucet is ERC20, Ownable {
         dailyClaimCount++;
 
         // Interactions
-        _transfer(address(this), faucetClaimer, FAUCET_DRIP);
+        _transfer(address(this), faucetClaimer, faucetDrip);
 
-        emit Claimed(msg.sender, FAUCET_DRIP);
+        emit Claimed(msg.sender, faucetDrip);
     }
 
+    /// @notice Refill Sepolia ETH into the faucet contract
+    /// @param amountToRefill Amount of ETH being refilled (must equal msg.value)
     function refillSepEth(uint256 amountToRefill) external payable onlyOwner {
-
         require(amountToRefill > 0, "invalid eth amount");
-
-        require(
-            msg.sender.balance >= amountToRefill,
-            "Sep Eth Balance: Insufficient"
-        );
 
         require(
             msg.value == amountToRefill,
@@ -193,42 +222,61 @@ contract RaiseBoxFaucet is ERC20, Ownable {
         emit SepEthRefilled(msg.sender, amountToRefill);
     }
 
+    /// @notice Pauses or unpauses Sepolia ETH drips
+    /// @param _paused True to pause, false to resume
     function toggleEthDripPause(bool _paused) external onlyOwner {
         sepEthDripsPaused = _paused;
 
         emit SepEthDripsPaused(_paused);
     }
 
+    // -----------------------------------------------------------------------
+    // DONATION HANDLERS
+    // -----------------------------------------------------------------------
+
+    /// @notice Accept ETH donations via `receive`
     receive() external payable {
         emit SepEthDonated(msg.sender, msg.value);
     }
 
+    /// @notice Accept ETH donations via `fallback`
     fallback() external payable {
         emit SepEthDonated(msg.sender, msg.value);
     }
 
+    // -----------------------------------------------------------------------
     // GETTER FUNCTIONS
+    // -----------------------------------------------------------------------
 
+    /// @param user Address to query token balance for
+    /// @return ERC20 balance of the user
     function getBalance(address user) public view returns (uint256) {
         return balanceOf(user);
     }
 
+    /// @param user Address to query ETH claim status for
+    /// @return True if user has already claimed ETH
     function getHasClaimedEth(address user) public view returns (bool) {
         return hasClaimedEth[user];
     }
 
+    /// @param user Address to query last claim time for
+    /// @return Timestamp of user’s last claim
     function getUserLastClaimTime(address user) public view returns (uint256) {
         return lastClaimTime[user];
     }
 
+    /// @return Current token balance of the faucet contract
     function getFaucetTotalSupply() public view returns (uint256) {
         return balanceOf(address(this));
     }
 
+    /// @return Current Sepolia ETH balance of the faucet contract
     function getContractSepEthBalance() public view returns (uint256) {
         return address(this).balance;
     }
 
+    /// @return The faucet contract’s owner address
     function getOwner() public view returns (address) {
         // return  owner();
         return raiseBoxFaucetOwner;
