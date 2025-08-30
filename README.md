@@ -1,22 +1,22 @@
-
 # RAISEBOX_FAUCET
 
-# TOKEN NAME: RAISEBOX TOKEN
+## Token Information
+- **Token Name:** RAISEBOX TOKEN  
+- **Token Symbol:** RB  
 
-# TOKEN SYMBOL: RB
+## Faucet Overview
+The RaiseBox Faucet allows testers of the RaiseBox contract to obtain **test tokens** for testing purposes.
 
-# faucet: Testers of the Raisebox contract can obtain test tokens from this faucet for testing purposes.
+### Sepolia ETH Drip
+- First-time interactors with this faucet contract also receive a **Sepolia ETH drip of 0.01 ETH** alongside faucet tokens.  
+- The Sepolia ETH drip is intended to enable future users of the contract to test the functionalities of the token and the contract.
 
-# faucet: first time intractors with this faucet contract receive a sepolia eth drip 0f 0.01 ether alog side faucet tokens.
+### Faucet Rules
+- Testers can only request tokens from this faucet **once every 3 days (72 hours)**.  
+- There is a **minimum withdrawal amount of 1000 tokens**,for each request.  
+- Only the **faucet owner** can mint or burn tokens. The contract ensures that there is always enough token balance to satisfy requested withdrawals.
 
-# Sepolia eth drip is to enable future users of the contract this token will service to test the functionalities of the contract
+### Donations
+- Users can **donate Sepolia ETH** to this contract. These donations are used to fund the Sepolia ETH drip function.  
+- Donations are appreciated and can be sent either **directly** or via **external contracts** to this contract.
 
-# Testers can only request token from this faucet once 3 days (72 hours).
-
-# There is a minimum withdrawal amount 0f 1000 tokens for this faucet set at 100 test tokens per request
-
-# only the faucet owner can mint/burn tokens and there must always be an amount greater than the requested withdrawal.
-
-# Users can donate sepolia eth this contract which would then be used to service the sepolia eth drip function of this contract. Donations are much appreciated.
-
-# Donations can be sent directly or via external contracts, whcih ever can be received by this contract.
