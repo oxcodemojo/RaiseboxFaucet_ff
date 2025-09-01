@@ -4,7 +4,7 @@ pragma solidity ^0.8.30;
 import {Test, console} from "../lib/lib/forge-std/src/Test.sol";
 import {RaiseBoxFaucet} from "../src/RaiseBoxFaucet.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {DeployRaiseboxContract} from "../script/DeployRaiseBox.s.sol";
+import {DeployRaiseboxContract} from "../script/DeployRaiseBoxFaucet.s.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
