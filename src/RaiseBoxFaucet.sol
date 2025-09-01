@@ -58,7 +58,7 @@ contract RaiseBoxFaucet is ERC20, Ownable {
         uint256 sepEthDrip_,
         uint256 dailySepEthCap_
     ) ERC20(name_, symbol_) Ownable(msg.sender) {
-        // raiseBoxFaucetOwner = msg.sender;
+
         faucetDrip = faucetDrip_;
         sepEthAmountToDrip = sepEthDrip_;
         dailySepEthCap = dailySepEthCap_;
