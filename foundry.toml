@@ -4,7 +4,5 @@ out = "out"
 libs = ["lib"]
 remapping = ["@openzeppelin=lib/openzeppelin-contracts/"]
 
-[rpc_endpoints]
-sepolia = "https://eth-sepolia.g.alchemy.com/v2/Fac6OdCyM0PAzxEV5zWCV"
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
