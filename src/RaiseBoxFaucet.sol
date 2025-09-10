@@ -24,6 +24,8 @@ contract RaiseBoxFaucet is ERC20, Ownable {
     // minted on deploy via constructor
     uint256 public constant INITIAL_SUPPLY = 1000000000 * 10 ** 18;
 
+    uint256 public constant TOKEN_BALANCE_THRESHOLD = 1000 * 10 ** 18;
+
     uint256 public lastDripDay;
 
     uint256 public lastFaucetDripDay;
@@ -58,7 +60,6 @@ contract RaiseBoxFaucet is ERC20, Ownable {
         uint256 sepEthDrip_,
         uint256 dailySepEthCap_
     ) ERC20(name_, symbol_) Ownable(msg.sender) {
-
         faucetDrip = faucetDrip_;
         sepEthAmountToDrip = sepEthDrip_;
         dailySepEthCap = dailySepEthCap_;
@@ -105,13 +106,14 @@ contract RaiseBoxFaucet is ERC20, Ownable {
     /// @dev Can only mint to the contract itself
     /// @param to Address that will receive minted tokens (must be the contract itself)
     /// @param amount Number of tokens to mint
+    /// @notice TOKEN_BALANCE_THRESHOLD Minimum faucet balance before minting new tokens can happen
 
     function mintFaucetTokens(address to, uint256 amount) public onlyOwner {
         if (to != address(this)) {
             revert RaiseBoxFaucet_MiningToNonContractAddressFailed();
         }
 
-        if (balanceOf(address(to)) > 1000 * 10 ** 18) {
+        if (balanceOf(address(to)) > TOKEN_BALANCE_THRESHOLD) {
             revert RaiseBoxFaucet_FaucetNotOutOfTokens();
         }
 
@@ -125,11 +127,16 @@ contract RaiseBoxFaucet is ERC20, Ownable {
     /// @param amountToBurn Amount of tokens to burn
 
     function burnFaucetTokens(uint256 amountToBurn) public onlyOwner {
-        require(amountToBurn <= balanceOf(address(this)), "Faucet Token Balance: Insufficient");
+        require(
+            amountToBurn <= balanceOf(address(this)),
+            "Cannot burn more than contract balance"
+        );
 
         // transfer faucet balance to owner first before burning
         // ensures owner has a balance before _burn (owner only function) can be called successfully
-        _transfer(address(this), msg.sender, balanceOf(address(this)));
+        _transfer(address(this), msg.sender, amountToBurn);
+
+        // _transfer(address(this), msg.sender, balanceOf(address(this))); // this bug was shipped lol
 
         _burn(msg.sender, amountToBurn);
     }
@@ -139,7 +146,10 @@ contract RaiseBoxFaucet is ERC20, Ownable {
     /// @param by The amount to adjust the `dailyClaimLimit` by
     /// @param increaseClaimLimit Set to true to increase, false to decrease
 
-    function adjustDailyClaimLimit(uint256 by, bool increaseClaimLimit) public onlyOwner {
+    function adjustDailyClaimLimit(
+        uint256 by,
+        bool increaseClaimLimit
+    ) public onlyOwner {
         if (increaseClaimLimit) {
             dailyClaimLimit += by;
         } else {
@@ -168,7 +178,11 @@ contract RaiseBoxFaucet is ERC20, Ownable {
             revert RaiseBoxFaucet_ClaimCooldownOn();
         }
 
-        if (faucetClaimer == address(0) || faucetClaimer == address(this) || faucetClaimer == Ownable.owner()) {
+        if (
+            faucetClaimer == address(0) ||
+            faucetClaimer == address(this) ||
+            faucetClaimer == Ownable.owner()
+        ) {
             revert RaiseBoxFaucet_OwnerOrZeroOrContractAddressCannotCallClaim();
         }
 
@@ -191,11 +205,16 @@ contract RaiseBoxFaucet is ERC20, Ownable {
                 // dailyClaimCount = 0;
             }
 
-            if (dailyDrips + sepEthAmountToDrip <= dailySepEthCap && address(this).balance >= sepEthAmountToDrip) {
+            if (
+                dailyDrips + sepEthAmountToDrip <= dailySepEthCap &&
+                address(this).balance >= sepEthAmountToDrip
+            ) {
                 hasClaimedEth[faucetClaimer] = true;
                 dailyDrips += sepEthAmountToDrip;
 
-                (bool success,) = faucetClaimer.call{value: sepEthAmountToDrip}("");
+                (bool success, ) = faucetClaimer.call{
+                    value: sepEthAmountToDrip
+                }("");
 
                 if (success) {
                     emit SepEthDripped(faucetClaimer, sepEthAmountToDrip);
@@ -205,7 +224,9 @@ contract RaiseBoxFaucet is ERC20, Ownable {
             } else {
                 emit SepEthDripSkipped(
                     faucetClaimer,
-                    address(this).balance < sepEthAmountToDrip ? "Faucet out of ETH" : "Daily ETH cap reached"
+                    address(this).balance < sepEthAmountToDrip
+                        ? "Faucet out of ETH"
+                        : "Daily ETH cap reached"
                 );
             }
         } else {
@@ -238,7 +259,10 @@ contract RaiseBoxFaucet is ERC20, Ownable {
     function refillSepEth(uint256 amountToRefill) external payable onlyOwner {
         require(amountToRefill > 0, "invalid eth amount");
 
-        require(msg.value == amountToRefill, "Refill amount must be same as value sent.");
+        require(
+            msg.value == amountToRefill,
+            "Refill amount must be same as value sent."
+        );
 
         emit SepEthRefilled(msg.sender, amountToRefill);
     }
@@ -301,7 +325,7 @@ contract RaiseBoxFaucet is ERC20, Ownable {
         return address(this).balance;
     }
 
-    /// @return The faucet contract’s owner address
+    /// @return The raisebox faucet owner address
     function getOwner() public view returns (address) {
         return Ownable.owner();
     }
