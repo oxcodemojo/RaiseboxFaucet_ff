@@ -59,7 +59,10 @@ contract TestRaiseBoxFaucet is Test {
         vm.deal(raiseBoxFaucetContractAddress, 1 ether);
         vm.deal(owner, 100 ether);
 
-        advanceBlockTime(3 days); // 3 days
+        
+        /// @dev this for foundry testing environment only as block.timestamp here always returns 1, 
+        /// @dev works as expected with actual block timestamp on testnet
+        advanceBlockTime(3 days); //  3 days 
     }
 
     function testFaucetBalanceIsAlwaysChecksum() public {
@@ -173,7 +176,7 @@ contract TestRaiseBoxFaucet is Test {
         raiseBoxDeployer.run();
         RaiseBoxFaucet box = raiseBoxDeployer.raiseBox();
         assertEq(box.name(), "raiseboxtoken");
-        assertEq(box.symbol(), "RB");
+        assertEq(box.symbol(), "RBT");
         // assertTrue(address(raiseBoxDeployer) == address(raiseBoxDeployer.raiseBox()));
     }
 
@@ -186,6 +189,7 @@ contract TestRaiseBoxFaucet is Test {
     }
 
     function testOnlyOwnerCanMintFaucetTokens() public {
+        
         // balance have to be below a certain threshold before new tokens can be minted
         // burn function has to be called first
         // only owner can call burn
@@ -254,6 +258,31 @@ contract TestRaiseBoxFaucet is Test {
             raiseBoxFaucet.getBalance(address(raiseBoxFaucet)),
             INITIAL_SUPPLY_MINTED
         );
+    }
+
+    // BURN RELATED CHECKS
+    function testBurnToken() public {
+        // initial supply of 1b tokens have been minted to contract on deployment
+        // burn will send amount to burn to owner and then from owner to zero address
+        // total supply should reduce by burn amount
+        uint256 burnAmount = 500_000_000 * 10 ** 18;
+
+        vm.prank(owner);
+        raiseBoxFaucet.burnFaucetTokens(burnAmount);
+        assertTrue(raiseBoxFaucet.getBalance(owner) == 0, "All tokens routed through owner have been burned to the zero address");
+
+        assertTrue(raiseBoxFaucet.getBalance(raiseBoxFaucetContractAddress) == burnAmount, "contract balance should decrease by burnAmount");
+       
+
+    }
+
+    function testAddresses() public {
+        vm.prank(user1);
+        console.log(raiseBoxFaucetContractAddress);
+        console.log(raiseBoxFaucet.getBalance(raiseBoxFaucetContractAddress));
+        console.log(owner);
+        console.log("owner faucet token balance:", raiseBoxFaucet.getBalance(owner));
+        console.log(address(this));
     }
 
     // CLAIM RELATED TESTS
