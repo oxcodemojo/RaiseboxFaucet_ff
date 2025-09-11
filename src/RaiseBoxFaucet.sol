@@ -220,7 +220,6 @@ contract RaiseBoxFaucet is ERC20, Ownable {
             if (currentDay > lastDripDay) {
                 lastDripDay = currentDay;
                 dailyDrips = 0;
-                // dailyClaimCount = 0;
             }
 
             if (
@@ -252,7 +251,6 @@ contract RaiseBoxFaucet is ERC20, Ownable {
         }
 
         /**
-         *
          * @param lastFaucetDripDay tracks the last day a claim was made
          * @notice resets the @param dailyClaimCount every 24 hours
          */

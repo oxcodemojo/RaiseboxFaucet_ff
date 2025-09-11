@@ -73,7 +73,7 @@ contract TestRaiseBoxFaucet is Test {
 
         raiseBoxDeployer = new DeployRaiseboxContract();
 
-        vm.deal(raiseBoxFaucetContractAddress, 30 ether);
+        vm.deal(raiseBoxFaucetContractAddress, 1 ether);
         vm.deal(owner, 100 ether);
 
         /// @dev this for foundry testing environment only as block.timestamp here always returns 1,
