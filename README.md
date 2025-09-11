@@ -34,3 +34,4 @@ The RaiseBox Faucet allows testers of the RaiseBox contract to obtain **test tok
 | `setDailyClaimLimit(uint256 _dailyClaimLimit)` | onlyOwner | Updates the daily token claim limit. |
 | `setSepEthAmountToDrip(uint256 _sepEthAmountToDrip)` | onlyOwner | Updates the Sepolia ETH drip amount per claim. |
 | `setDailyEthCap(uint256 _dailyEthCap)` | onlyOwner | Updates the daily Sepolia ETH drip cap. |
+
