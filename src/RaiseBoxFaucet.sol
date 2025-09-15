@@ -146,13 +146,7 @@ contract RaiseBoxFaucet is ERC20, Ownable {
             "Cannot burn more than contract balance"
         );
 
-        // transfer faucet balance to owner first before burning
-        // ensures owner has a balance before _burn (owner only function) can be called successfully
-        _transfer(address(this), msg.sender, amountToBurn);
-
-        // _transfer(address(this), msg.sender, balanceOf(address(this))); // this bug was shipped lol
-
-        _burn(msg.sender, amountToBurn);
+        _burn(address(this), amountToBurn);
 
         emit BurntFaucetTokens(amountToBurn);
     }

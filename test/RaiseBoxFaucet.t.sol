@@ -81,6 +81,20 @@ contract TestRaiseBoxFaucet is Test {
         advanceBlockTime(3 days); //  3 days
     }
 
+    function testBurn() public {
+        console.log(raiseBoxFaucet.getBalance(raiseBoxFaucetContractAddress));
+        vm.prank(owner);
+        raiseBoxFaucet.burnFaucetTokens(INITIAL_SUPPLY_MINTED);
+        console.log(raiseBoxFaucet.getBalance(address(0)));
+
+        vm.prank(owner);
+        raiseBoxFaucet.mintFaucetTokens(
+            raiseBoxFaucetContractAddress,
+            INITIAL_SUPPLY_MINTED
+        );
+        console.log(raiseBoxFaucet.getBalance(raiseBoxFaucetContractAddress));
+    }
+
     function testInitParamsAreCorrect() public {
         vm.prank(owner);
         assertEq(raiseBoxFaucet.tokenName(), testInitParams.tokenName);
@@ -93,22 +107,22 @@ contract TestRaiseBoxFaucet is Test {
         );
     }
 
-    // function testFaucetBalanceIsAlwaysChecksum() public {
-    //     address[5] memory claimers = [user1, user2, user3, user4, user5];
-    //     uint256 userClaims;
-    //     uint256 balanceLeft;
+    function testFaucetBalanceIsAlwaysChecksum() public {
+        address[5] memory claimers = [user1, user2, user3, user4, user5];
+        uint256 userClaims;
+        uint256 balanceLeft;
 
-    //     for (uint256 i = 0; i < claimers.length; i++) {
-    //         vm.prank(claimers[i]);
-    //         raiseBoxFaucet.claimFaucetTokens();
+        for (uint256 i = 0; i < claimers.length; i++) {
+            vm.prank(claimers[i]);
+            raiseBoxFaucet.claimFaucetTokens();
 
-    //         userClaims += raiseBoxFaucet.getBalance(claimers[i]);
-    //         balanceLeft = (INITIAL_SUPPLY_MINTED - userClaims);
-    //         console.log((balanceLeft + userClaims));
+            userClaims += raiseBoxFaucet.getBalance(claimers[i]);
+            balanceLeft = (INITIAL_SUPPLY_MINTED - userClaims);
+            console.log((balanceLeft + userClaims));
 
-    //         assertTrue(INITIAL_SUPPLY_MINTED == (balanceLeft + userClaims));
-    //     }
-    // }
+            assertTrue(INITIAL_SUPPLY_MINTED == (balanceLeft + userClaims));
+        }
+    }
 
     function testOnlyOwnerCanAdjustDailyClaimLimit() public {
         vm.prank(owner);
@@ -179,26 +193,26 @@ contract TestRaiseBoxFaucet is Test {
         console.log(raiseBoxFaucet.dailyClaimLimit());
     }
 
-    // function testOwnerCanMakeDirectSepEthDeposits() public {
-    //     vm.prank(owner);
-    //     (bool sentSuccess, ) = address(raiseBoxFaucet).call{value: 20 ether}(
-    //         abi.encode("owner donated 20 ether to this contract")
-    //     );
+    function testOwnerCanMakeDirectSepEthDeposits() public {
+        vm.prank(owner);
+        (bool sentSuccess, ) = address(raiseBoxFaucet).call{value: 20 ether}(
+            abi.encode("owner donated 20 ether to this contract")
+        );
 
-    //     assertTrue(owner.balance == 80 ether);
-    //     assertTrue(address(raiseBoxFaucet).balance == 21 ether);
+        assertTrue(owner.balance == 80 ether);
+        assertTrue(address(raiseBoxFaucet).balance == 21 ether);
 
-    //     vm.prank(raiseBoxFaucetContractAddress);
-    //     (bool contractSentSuccess, ) = address(raiseBoxFaucet).call{
-    //         value: 0.5 ether
-    //     }(abi.encode("contract donated 0.5 ether to self"));
+        vm.prank(raiseBoxFaucetContractAddress);
+        (bool contractSentSuccess, ) = address(raiseBoxFaucet).call{
+            value: 0.5 ether
+        }(abi.encode("contract donated 0.5 ether to self"));
 
-    //     assertTrue(owner.balance == 80 ether);
-    //     assertTrue(
-    //         raiseBoxFaucetContractAddress.balance == 21.0 ether,
-    //         "contract cannot send sep eth to self, balance unchanged"
-    //     );
-    // }
+        assertTrue(owner.balance == 80 ether);
+        assertTrue(
+            raiseBoxFaucetContractAddress.balance == 21.0 ether,
+            "contract cannot send sep eth to self, balance unchanged"
+        );
+    }
 
     function testOwnerIsDeployer() public {
         raiseBoxDeployer.run();
@@ -280,7 +294,7 @@ contract TestRaiseBoxFaucet is Test {
         );
     }
 
-    function testInitialSupplyMintedOnDeployment() public {
+    function testInitialSupplyMintedOnDeployment() public view {
         assertEq(
             raiseBoxFaucet.getBalance(address(raiseBoxFaucet)),
             INITIAL_SUPPLY_MINTED
@@ -290,7 +304,6 @@ contract TestRaiseBoxFaucet is Test {
     // BURN RELATED CHECKS
     function testBurnToken() public {
         // initial supply of 1b tokens have been minted to contract on deployment
-        // burn will send amount to burn to owner and then from owner to zero address
         // total supply should reduce by burn amount
         uint256 burnAmount = 500_000_000 * 10 ** 18;
 
