@@ -270,15 +270,6 @@ contract TestRaiseBoxFaucet is Test {
         );
     }
 
-    function testAddresses() public {
-        vm.prank(user1);
-        console.log(raiseBoxFaucetContractAddress);
-        console.log(raiseBoxFaucet.getBalance(raiseBoxFaucetContractAddress));
-        console.log(owner);
-        console.log("owner faucet token balance:", raiseBoxFaucet.getBalance(owner));
-        console.log(address(this));
-    }
-
     // CLAIM RELATED TESTS
 
     function testReturnClaimerCannotClaimSepEth() public {
