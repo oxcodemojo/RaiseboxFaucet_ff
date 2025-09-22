@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity ^0.8.30;
 
-import {Test, console} from "../lib/lib/forge-std/src/Test.sol";
+import {Test, console} from "../lib/forge-std/src/Test.sol";
 import {RaiseBoxFaucet} from "../src/RaiseBoxFaucet.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {DeployRaiseboxContract} from "../script/DeployRaiseBoxFaucet.s.sol";
@@ -49,14 +49,13 @@ contract TestRaiseBoxFaucet is Test {
         uint256 dailySepDripCap;
     }
 
-    TestInitParams testInitParams =
-        TestInitParams({
-            tokenName: "raiseboxtoken",
-            tokenSymbol: "RBT",
-            faucetDrip: 1000 * 10 ** 18,
-            sepDrip: 0.005 ether,
-            dailySepDripCap: 0.5 ether
-        });
+    TestInitParams testInitParams = TestInitParams({
+        tokenName: "raiseboxtoken",
+        tokenSymbol: "RBT",
+        faucetDrip: 1000 * 10 ** 18,
+        sepDrip: 0.005 ether,
+        dailySepDripCap: 0.5 ether
+    });
 
     function setUp() public {
         owner = address(this);
@@ -88,10 +87,7 @@ contract TestRaiseBoxFaucet is Test {
         console.log(raiseBoxFaucet.getBalance(address(0)));
 
         vm.prank(owner);
-        raiseBoxFaucet.mintFaucetTokens(
-            raiseBoxFaucetContractAddress,
-            INITIAL_SUPPLY_MINTED
-        );
+        raiseBoxFaucet.mintFaucetTokens(raiseBoxFaucetContractAddress, INITIAL_SUPPLY_MINTED);
         console.log(raiseBoxFaucet.getBalance(raiseBoxFaucetContractAddress));
     }
 
@@ -101,10 +97,7 @@ contract TestRaiseBoxFaucet is Test {
         assertEq(raiseBoxFaucet.tokenSymbol(), testInitParams.tokenSymbol);
         assertEq(raiseBoxFaucet.faucetDrip(), testInitParams.faucetDrip);
         assertEq(raiseBoxFaucet.sepEthAmountToDrip(), testInitParams.sepDrip);
-        assertEq(
-            raiseBoxFaucet.dailySepEthCap(),
-            testInitParams.dailySepDripCap
-        );
+        assertEq(raiseBoxFaucet.dailySepEthCap(), testInitParams.dailySepDripCap);
     }
 
     function testFaucetBalanceIsAlwaysChecksum() public {
@@ -127,18 +120,10 @@ contract TestRaiseBoxFaucet is Test {
     function testOnlyOwnerCanAdjustDailyClaimLimit() public {
         vm.prank(owner);
         raiseBoxFaucet.adjustDailyClaimLimit(1000, true);
-        assertTrue(
-            raiseBoxFaucet.dailyClaimLimit() == 1100,
-            "Daily claim limit should be 1100"
-        );
+        assertTrue(raiseBoxFaucet.dailyClaimLimit() == 1100, "Daily claim limit should be 1100");
 
         vm.prank(user1);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                Ownable.OwnableUnauthorizedAccount.selector,
-                user1
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, user1));
         raiseBoxFaucet.adjustDailyClaimLimit(500, true);
     }
 
@@ -148,37 +133,25 @@ contract TestRaiseBoxFaucet is Test {
         vm.prank(owner);
         raiseBoxFaucet.adjustDailyClaimLimit(500, true);
 
-        assertTrue(
-            raiseBoxFaucet.dailyClaimLimit() == 600,
-            "Daily claim  should increase by 500"
-        );
+        assertTrue(raiseBoxFaucet.dailyClaimLimit() == 600, "Daily claim  should increase by 500");
 
         console.log(raiseBoxFaucet.dailyClaimLimit());
 
         vm.prank(owner);
         raiseBoxFaucet.adjustDailyClaimLimit(500, true);
-        assertTrue(
-            raiseBoxFaucet.dailyClaimLimit() == 1100,
-            "Daily claim  should increase by 500"
-        );
+        assertTrue(raiseBoxFaucet.dailyClaimLimit() == 1100, "Daily claim  should increase by 500");
 
         console.log(raiseBoxFaucet.dailyClaimLimit());
 
         vm.prank(owner);
         raiseBoxFaucet.adjustDailyClaimLimit(500, false);
-        assertTrue(
-            raiseBoxFaucet.dailyClaimLimit() == 600,
-            "Daily claim  should decrease by 500"
-        );
+        assertTrue(raiseBoxFaucet.dailyClaimLimit() == 600, "Daily claim  should decrease by 500");
 
         console.log(raiseBoxFaucet.dailyClaimLimit());
 
         vm.prank(owner);
         raiseBoxFaucet.adjustDailyClaimLimit(500, false);
-        assertTrue(
-            raiseBoxFaucet.dailyClaimLimit() == 100,
-            "Daily claim  should decrease by 500"
-        );
+        assertTrue(raiseBoxFaucet.dailyClaimLimit() == 100, "Daily claim  should decrease by 500");
 
         console.log(raiseBoxFaucet.dailyClaimLimit());
 
@@ -195,17 +168,15 @@ contract TestRaiseBoxFaucet is Test {
 
     function testOwnerCanMakeDirectSepEthDeposits() public {
         vm.prank(owner);
-        (bool sentSuccess, ) = address(raiseBoxFaucet).call{value: 20 ether}(
-            abi.encode("owner donated 20 ether to this contract")
-        );
+        (bool sentSuccess,) =
+            address(raiseBoxFaucet).call{value: 20 ether}(abi.encode("owner donated 20 ether to this contract"));
 
         assertTrue(owner.balance == 80 ether);
         assertTrue(address(raiseBoxFaucet).balance == 21 ether);
 
         vm.prank(raiseBoxFaucetContractAddress);
-        (bool contractSentSuccess, ) = address(raiseBoxFaucet).call{
-            value: 0.5 ether
-        }(abi.encode("contract donated 0.5 ether to self"));
+        (bool contractSentSuccess,) =
+            address(raiseBoxFaucet).call{value: 0.5 ether}(abi.encode("contract donated 0.5 ether to self"));
 
         assertTrue(owner.balance == 80 ether);
         assertTrue(
@@ -239,48 +210,30 @@ contract TestRaiseBoxFaucet is Test {
         vm.stopPrank();
 
         vm.prank(owner);
-        raiseBoxFaucet.mintFaucetTokens(
-            raiseBoxFaucetContractAddress,
-            200 * 10 ** 18
-        );
+        raiseBoxFaucet.mintFaucetTokens(raiseBoxFaucetContractAddress, 200 * 10 ** 18);
 
         vm.prank(user1);
         vm.expectRevert();
-        raiseBoxFaucet.mintFaucetTokens(
-            raiseBoxFaucetContractAddress,
-            100 * 10 ** 18
-        );
+        raiseBoxFaucet.mintFaucetTokens(raiseBoxFaucetContractAddress, 100 * 10 ** 18);
     }
 
     function testTotalSupplyUpdatesCorrectlyOnMint() public {
-        uint256 contractInititalTokenSupply = raiseBoxFaucet
-            .getFaucetTotalSupply();
-        uint256 contractInitialSepEthSupply = raiseBoxFaucet
-            .getContractSepEthBalance();
+        uint256 contractInititalTokenSupply = raiseBoxFaucet.getFaucetTotalSupply();
+        uint256 contractInitialSepEthSupply = raiseBoxFaucet.getContractSepEthBalance();
 
         vm.startPrank(owner);
         raiseBoxFaucet.burnFaucetTokens(INITIAL_SUPPLY_MINTED);
         vm.stopPrank();
 
+        assertEq(raiseBoxFaucet.getFaucetTotalSupply(), 0, "All faucet tokens have been burnt");
         assertEq(
-            raiseBoxFaucet.getFaucetTotalSupply(),
-            0,
-            "All faucet tokens have been burnt"
-        );
-        assertEq(
-            raiseBoxFaucet.getContractSepEthBalance(),
-            contractInitialSepEthSupply,
-            "Sep Eth balance remains unchanged"
+            raiseBoxFaucet.getContractSepEthBalance(), contractInitialSepEthSupply, "Sep Eth balance remains unchanged"
         );
 
         vm.prank(owner);
-        raiseBoxFaucet.mintFaucetTokens(
-            raiseBoxFaucetContractAddress,
-            1000000 * 10 ** 18
-        );
+        raiseBoxFaucet.mintFaucetTokens(raiseBoxFaucetContractAddress, 1000000 * 10 ** 18);
 
-        uint256 contractFinalTokenSupply = raiseBoxFaucet
-            .getFaucetTotalSupply();
+        uint256 contractFinalTokenSupply = raiseBoxFaucet.getFaucetTotalSupply();
 
         assertEq(
             raiseBoxFaucet.getFaucetTotalSupply(),
@@ -295,10 +248,7 @@ contract TestRaiseBoxFaucet is Test {
     }
 
     function testInitialSupplyMintedOnDeployment() public view {
-        assertEq(
-            raiseBoxFaucet.getBalance(address(raiseBoxFaucet)),
-            INITIAL_SUPPLY_MINTED
-        );
+        assertEq(raiseBoxFaucet.getBalance(address(raiseBoxFaucet)), INITIAL_SUPPLY_MINTED);
     }
 
     // BURN RELATED CHECKS
@@ -315,8 +265,7 @@ contract TestRaiseBoxFaucet is Test {
         );
 
         assertTrue(
-            raiseBoxFaucet.getBalance(raiseBoxFaucetContractAddress) ==
-                burnAmount,
+            raiseBoxFaucet.getBalance(raiseBoxFaucetContractAddress) == burnAmount,
             "contract balance should decrease by burnAmount"
         );
     }
@@ -326,10 +275,7 @@ contract TestRaiseBoxFaucet is Test {
         console.log(raiseBoxFaucetContractAddress);
         console.log(raiseBoxFaucet.getBalance(raiseBoxFaucetContractAddress));
         console.log(owner);
-        console.log(
-            "owner faucet token balance:",
-            raiseBoxFaucet.getBalance(owner)
-        );
+        console.log("owner faucet token balance:", raiseBoxFaucet.getBalance(owner));
         console.log(address(this));
     }
 
@@ -358,19 +304,14 @@ contract TestRaiseBoxFaucet is Test {
         console.log(raiseBoxFaucet.getBalance(user1));
     }
 
-    function testUserClaimsExactWithdrawalAmountOfFaucetTokensPerClaim()
-        public
-    {
+    function testUserClaimsExactWithdrawalAmountOfFaucetTokensPerClaim() public {
         // user receives 1000 faucet tokens on each claim
         uint256 amountOfFaucetTokensPerClaim = raiseBoxFaucet.faucetDrip();
 
         vm.prank(user1);
         raiseBoxFaucet.claimFaucetTokens();
 
-        assertEq(
-            raiseBoxFaucet.getBalance(user1),
-            amountOfFaucetTokensPerClaim
-        );
+        assertEq(raiseBoxFaucet.getBalance(user1), amountOfFaucetTokensPerClaim);
 
         //Simulate cooldown passing...
 
@@ -406,27 +347,18 @@ contract TestRaiseBoxFaucet is Test {
 
     function testNewUserClaimsFaucetTokensAndEth() public {
         uint256 userInitialEthBalance = address(user1).balance;
-        uint256 userInitialFaucetTokenBalance = raiseBoxFaucet.getBalance(
-            user1
-        );
+        uint256 userInitialFaucetTokenBalance = raiseBoxFaucet.getBalance(user1);
 
         // claim is suppose to send both faucet tokens and eth to claimers
         vm.prank(user1);
         raiseBoxFaucet.claimFaucetTokens();
         assertEq(
-            raiseBoxFaucet.getBalance(user1),
-            raiseBoxFaucet.faucetDrip(),
-            "user 1 should receive 1000 faucet tokens"
+            raiseBoxFaucet.getBalance(user1), raiseBoxFaucet.faucetDrip(), "user 1 should receive 1000 faucet tokens"
         );
-        assertEq(
-            address(user1).balance,
-            0.005 ether,
-            "user 1 should receive 0.005 ether"
-        );
+        assertEq(address(user1).balance, 0.005 ether, "user 1 should receive 0.005 ether");
 
         assertTrue(
-            address(user1).balance > userInitialEthBalance,
-            "Final balance should greater, User1 received sep eth"
+            address(user1).balance > userInitialEthBalance, "Final balance should greater, User1 received sep eth"
         );
 
         assertTrue(
@@ -438,13 +370,8 @@ contract TestRaiseBoxFaucet is Test {
     function testClaimDoesNotFailWhenSepEthBalanceIsLow() public {
         // this test checks to assert that claim suceeds even when sep eth balance is low
         // and no sep eth drips can be made along with faucet token drips
-        RaiseBoxFaucet testRaiseBoxContract = new RaiseBoxFaucet(
-            "raiseboxtoken",
-            "RB",
-            1000 * 10 ** 18,
-            0.01 ether,
-            1 ether
-        );
+        RaiseBoxFaucet testRaiseBoxContract =
+            new RaiseBoxFaucet("raiseboxtoken", "RB", 1000 * 10 ** 18, 0.01 ether, 1 ether);
         // this contract instance has no sep eth in it balance
 
         vm.prank(user1);
@@ -455,36 +382,18 @@ contract TestRaiseBoxFaucet is Test {
             raiseBoxFaucet.faucetDrip(),
             "User1 received faucet tokens successfully"
         );
-        assertEq(
-            address(user1).balance,
-            0,
-            "No sep eth was dripped: Low balance"
-        );
+        assertEq(address(user1).balance, 0, "No sep eth was dripped: Low balance");
     }
 
     function testClaimIsSuccessfulForMultipleUsers() public {
-        address[10] memory users = [
-            user1,
-            user2,
-            user3,
-            user4,
-            user5,
-            user6,
-            user7,
-            user8,
-            user9,
-            user10
-        ];
+        address[10] memory users = [user1, user2, user3, user4, user5, user6, user7, user8, user9, user10];
 
         for (uint256 i = 0; i < users.length; i++) {
             vm.prank(users[i]);
             raiseBoxFaucet.claimFaucetTokens();
 
             assertEq(address(users[i]).balance, 0.005 ether);
-            assertEq(
-                raiseBoxFaucet.getBalance(users[i]),
-                raiseBoxFaucet.faucetDrip()
-            );
+            assertEq(raiseBoxFaucet.getBalance(users[i]), raiseBoxFaucet.faucetDrip());
         }
     }
 
@@ -495,9 +404,7 @@ contract TestRaiseBoxFaucet is Test {
         assertEq(claimed, true, "User has not successfully claimed eth");
     }
 
-    function testHasClaimedEthStorageUpdatesCorrectlyForMultipleClaimers()
-        public
-    {
+    function testHasClaimedEthStorageUpdatesCorrectlyForMultipleClaimers() public {
         address[6] memory users = [user1, user2, user3, user4, user5, user6];
 
         for (uint256 i = 0; i < users.length; i++) {
@@ -506,11 +413,7 @@ contract TestRaiseBoxFaucet is Test {
 
             bool claimed = raiseBoxFaucet.getHasClaimedEth(users[i]);
 
-            assertEq(
-                claimed,
-                true,
-                "has Claimed Storage Not Successfully updated: claims not successfully"
-            );
+            assertEq(claimed, true, "has Claimed Storage Not Successfully updated: claims not successfully");
         }
     }
 
@@ -524,9 +427,7 @@ contract TestRaiseBoxFaucet is Test {
         vm.prank(user2);
         raiseBoxFaucet.claimFaucetTokens();
 
-        uint256 totalClaimedByUser1AndUser2 = (raiseBoxFaucet.getBalance(
-            user1
-        ) + raiseBoxFaucet.getBalance(user2));
+        uint256 totalClaimedByUser1AndUser2 = (raiseBoxFaucet.getBalance(user1) + raiseBoxFaucet.getBalance(user2));
 
         uint256 contractFinalBalance = raiseBoxFaucet.getFaucetTotalSupply();
 
@@ -607,10 +508,7 @@ contract TestRaiseBoxFaucet is Test {
         uint256 user1FinalEthBalance1 = address(user1).balance;
         console.log(user1FinalEthBalance1);
 
-        assertTrue(
-            user1InitialEthBalance == user1FinalEthBalance1,
-            "ETH DRIP PAUSED: No eth dripped to user 1"
-        );
+        assertTrue(user1InitialEthBalance == user1FinalEthBalance1, "ETH DRIP PAUSED: No eth dripped to user 1");
 
         vm.prank(owner);
         raiseBoxFaucet.toggleEthDripPause(false);
@@ -639,19 +537,7 @@ contract TestRaiseBoxFaucet is Test {
     }
 
     function testDailyClaimCountResetsAfter24Hours() public {
-        address[11] memory faucetUsers = [
-            user1,
-            user2,
-            user3,
-            user4,
-            user5,
-            user6,
-            user7,
-            user8,
-            user9,
-            user10,
-            user11
-        ];
+        address[11] memory faucetUsers = [user1, user2, user3, user4, user5, user6, user7, user8, user9, user10, user11];
 
         for (uint256 i = 0; i < faucetUsers.length; i++) {
             vm.prank(faucetUsers[i]);
@@ -662,34 +548,25 @@ contract TestRaiseBoxFaucet is Test {
         vm.prank(user3);
         raiseBoxFaucet.claimFaucetTokens();
         assertTrue(
-            raiseBoxFaucet.dailyClaimCount() == 1,
-            "Daily claim count should be 1 since it resets every 24 hours"
+            raiseBoxFaucet.dailyClaimCount() == 1, "Daily claim count should be 1 since it resets every 24 hours"
         );
 
         vm.prank(user12);
         raiseBoxFaucet.claimFaucetTokens();
         assertTrue(
-            raiseBoxFaucet.dailyClaimCount() == 2,
-            "Daily claim count should be 2: Two claims have been made today"
+            raiseBoxFaucet.dailyClaimCount() == 2, "Daily claim count should be 2: Two claims have been made today"
         );
 
         advanceBlockTime(block.timestamp + 3 days);
         vm.prank(user1);
         raiseBoxFaucet.claimFaucetTokens();
-        assertEq(
-            address(user1).balance,
-            0.005 ether,
-            "Ether balance of user1 should remain unchanged: Not first timer"
-        );
-        assertTrue(
-            raiseBoxFaucet.dailyClaimCount() == 1,
-            "Daily claim count should be 1: More than 24 hours passed"
-        );
+        assertEq(address(user1).balance, 0.005 ether, "Ether balance of user1 should remain unchanged: Not first timer");
+        assertTrue(raiseBoxFaucet.dailyClaimCount() == 1, "Daily claim count should be 1: More than 24 hours passed");
     }
 
     function testContractRecievesDirectDeposits() public {
         vm.deal(user1, 10 ether);
-        (bool success, ) = address(raiseBoxFaucet).call{value: 5 ether}("");
+        (bool success,) = address(raiseBoxFaucet).call{value: 5 ether}("");
 
         assertTrue(success);
         assertEq(
@@ -699,9 +576,7 @@ contract TestRaiseBoxFaucet is Test {
         );
 
         vm.prank(user1);
-        (bool sent, ) = address(raiseBoxFaucet).call{value: 0 ether}(
-            abi.encode("Donated Sep Eth to raisebox")
-        );
+        (bool sent,) = address(raiseBoxFaucet).call{value: 0 ether}(abi.encode("Donated Sep Eth to raisebox"));
         assertTrue(sent);
     }
 
@@ -709,30 +584,21 @@ contract TestRaiseBoxFaucet is Test {
         vm.prank(owner);
         raiseBoxFaucet.getBalance(owner);
 
-        assertTrue(
-            raiseBoxFaucet.getBalance(owner) == 0,
-            "ownwer should have zero faucet balance"
-        );
+        assertTrue(raiseBoxFaucet.getBalance(owner) == 0, "ownwer should have zero faucet balance");
 
         vm.prank(user1);
         raiseBoxFaucet.getBalance(user1);
 
-        assertTrue(
-            raiseBoxFaucet.getBalance(user1) == 0,
-            "user1 should have no balance"
-        );
+        assertTrue(raiseBoxFaucet.getBalance(user1) == 0, "user1 should have no balance");
 
         vm.prank(user1);
         raiseBoxFaucet.claimFaucetTokens();
 
         assertTrue(
-            raiseBoxFaucet.getBalance(user1) > 0,
-            "user1 balance should be greater than zero, claimed faucet tokens"
+            raiseBoxFaucet.getBalance(user1) > 0, "user1 balance should be greater than zero, claimed faucet tokens"
         );
         assertEq(
-            raiseBoxFaucet.getBalance(user1),
-            raiseBoxFaucet.faucetDrip(),
-            "user1 balance should be equal faucet_drip"
+            raiseBoxFaucet.getBalance(user1), raiseBoxFaucet.faucetDrip(), "user1 balance should be equal faucet_drip"
         );
     }
 
@@ -740,10 +606,7 @@ contract TestRaiseBoxFaucet is Test {
         vm.prank(user1);
         raiseBoxFaucet.claimFaucetTokens();
 
-        assertTrue(
-            raiseBoxFaucet.getHasClaimedEth(user1),
-            "user should have claimed eth"
-        );
+        assertTrue(raiseBoxFaucet.getHasClaimedEth(user1), "user should have claimed eth");
 
         vm.prank(owner);
         raiseBoxFaucet.toggleEthDripPause(true);
@@ -752,8 +615,7 @@ contract TestRaiseBoxFaucet is Test {
         raiseBoxFaucet.claimFaucetTokens();
 
         assertTrue(
-            raiseBoxFaucet.getHasClaimedEth(user2) == false,
-            "eth drip paused: no eth should be dripped to user2"
+            raiseBoxFaucet.getHasClaimedEth(user2) == false, "eth drip paused: no eth should be dripped to user2"
         );
     }
 
@@ -762,17 +624,13 @@ contract TestRaiseBoxFaucet is Test {
         raiseBoxFaucet.claimFaucetTokens();
 
         assertTrue(
-            raiseBoxFaucet.getUserLastClaimTime(user1) == 3 days,
-            "user last claim time should 3 days after deployment"
+            raiseBoxFaucet.getUserLastClaimTime(user1) == 3 days, "user last claim time should 3 days after deployment"
         ); // just for this testing envionment
 
         vm.warp(6 days);
         vm.prank(user1);
         raiseBoxFaucet.claimFaucetTokens();
-        assertTrue(
-            raiseBoxFaucet.getUserLastClaimTime(user1) != 3 days,
-            "user last claim time should be 6 days now"
-        );
+        assertTrue(raiseBoxFaucet.getUserLastClaimTime(user1) != 3 days, "user last claim time should be 6 days now");
     }
 
     function testClaimCompleteFlow() public {
@@ -780,22 +638,17 @@ contract TestRaiseBoxFaucet is Test {
         raiseBoxFaucet.claimFaucetTokens();
 
         assertTrue(
-            block.timestamp == raiseBoxFaucet.getUserLastClaimTime(user1),
-            "Last claim time: current block timestamp"
+            block.timestamp == raiseBoxFaucet.getUserLastClaimTime(user1), "Last claim time: current block timestamp"
         );
 
         assertTrue(user1 != address(0), "user1 is not the zero address");
 
         assertTrue(user1 != raiseBoxFaucet.getOwner(), "user1 is not owner");
 
-        assertTrue(
-            user1 != raiseBoxFaucetContractAddress,
-            "user1 is not contract"
-        );
+        assertTrue(user1 != raiseBoxFaucetContractAddress, "user1 is not contract");
 
         assertTrue(
-            raiseBoxFaucet.getBalance(raiseBoxFaucetContractAddress) >
-                raiseBoxFaucet.faucetDrip(),
+            raiseBoxFaucet.getBalance(raiseBoxFaucetContractAddress) > raiseBoxFaucet.faucetDrip(),
             "Contract shouls have enough faucet tokens"
         );
 
@@ -804,10 +657,7 @@ contract TestRaiseBoxFaucet is Test {
             "Daily claim count must be less than daily claim limit of 100 claims"
         );
 
-        assertTrue(
-            raiseBoxFaucet.getHasClaimedEth(user1),
-            "User1 has not claimed eth"
-        );
+        assertTrue(raiseBoxFaucet.getHasClaimedEth(user1), "User1 has not claimed eth");
 
         assertTrue(!raiseBoxFaucet.sepEthDripsPaused(), "Sep Eth drip is ON");
 
@@ -817,15 +667,12 @@ contract TestRaiseBoxFaucet is Test {
         );
 
         assertTrue(
-            raiseBoxFaucet.dailyDrips() + raiseBoxFaucet.sepEthAmountToDrip() <
-                address(raiseBoxFaucet).balance,
+            raiseBoxFaucet.dailyDrips() + raiseBoxFaucet.sepEthAmountToDrip() < address(raiseBoxFaucet).balance,
             "Contract Balance exceeded, top up sep eth"
         );
 
         assertTrue(
-            address(raiseBoxFaucet).balance >
-                raiseBoxFaucet.sepEthAmountToDrip(),
-            "Contract Sep Eth balance is low"
+            address(raiseBoxFaucet).balance > raiseBoxFaucet.sepEthAmountToDrip(), "Contract Sep Eth balance is low"
         );
 
         assertTrue(
@@ -833,45 +680,27 @@ contract TestRaiseBoxFaucet is Test {
             "Daily drip aount not updated successfully"
         );
 
-        assertTrue(
-            address(user1).balance == raiseBoxFaucet.sepEthAmountToDrip(),
-            "User1 received No Sep Eth on claim"
-        );
+        assertTrue(address(user1).balance == raiseBoxFaucet.sepEthAmountToDrip(), "User1 received No Sep Eth on claim");
 
-        assertTrue(
-            raiseBoxFaucet.dailyDrips() != 0,
-            "User1 claimed: Daily drip should be 0.005 ether"
-        );
+        assertTrue(raiseBoxFaucet.dailyDrips() != 0, "User1 claimed: Daily drip should be 0.005 ether");
 
-        assertTrue(
-            raiseBoxFaucet.dailyClaimCount() != 0,
-            "User1 claimed: Daily claim count should be 1"
-        );
+        assertTrue(raiseBoxFaucet.dailyClaimCount() != 0, "User1 claimed: Daily claim count should be 1");
 
-        assertTrue(
-            block.timestamp != raiseBoxFaucet.lastFaucetDripDay() + 1,
-            "Still in current day"
-        );
+        assertTrue(block.timestamp != raiseBoxFaucet.lastFaucetDripDay() + 1, "Still in current day");
 
         assertTrue(
             raiseBoxFaucet.getUserLastClaimTime(user1) == block.timestamp,
             "User1 last claim time should be current timestamp"
         );
 
-        assertTrue(
-            raiseBoxFaucet.dailyClaimCount() == 1,
-            "Claim count did not Increase by 1"
-        );
+        assertTrue(raiseBoxFaucet.dailyClaimCount() == 1, "Claim count did not Increase by 1");
 
         assertTrue(
             raiseBoxFaucet.getBalance(user1) == raiseBoxFaucet.faucetDrip(),
             "User1 faucet token balance should equal 1000 $RB"
         );
 
-        assertTrue(
-            raiseBoxFaucet.getClaimer() == user1,
-            "Claimer should be User1"
-        );
+        assertTrue(raiseBoxFaucet.getClaimer() == user1, "Claimer should be User1");
 
         vm.stopPrank();
     }
@@ -880,20 +709,14 @@ contract TestRaiseBoxFaucet is Test {
         vm.prank(user1);
         raiseBoxFaucet.claimFaucetTokens();
 
-        assertTrue(
-            user1 == raiseBoxFaucet.getClaimer(),
-            "Claimer should be User1"
-        );
+        assertTrue(user1 == raiseBoxFaucet.getClaimer(), "Claimer should be User1");
     }
 
     function testGetHasClaimedEth() public {
         vm.prank(user1);
         raiseBoxFaucet.claimFaucetTokens();
 
-        assertTrue(
-            raiseBoxFaucet.getHasClaimedEth(user1),
-            "User1 has not claimed Sep Eth"
-        );
+        assertTrue(raiseBoxFaucet.getHasClaimedEth(user1), "User1 has not claimed Sep Eth");
     }
 
     function testGetTotalSupply() public {
@@ -905,19 +728,10 @@ contract TestRaiseBoxFaucet is Test {
         vm.prank(owner);
         raiseBoxFaucet.burnFaucetTokens(INITIAL_SUPPLY_MINTED);
 
-        assertTrue(
-            raiseBoxFaucet.getFaucetTotalSupply() == 0,
-            "Token Burn: Supply should be zero"
-        );
+        assertTrue(raiseBoxFaucet.getFaucetTotalSupply() == 0, "Token Burn: Supply should be zero");
 
         vm.prank(owner);
-        raiseBoxFaucet.mintFaucetTokens(
-            raiseBoxFaucetContractAddress,
-            INITIAL_SUPPLY_MINTED
-        );
-        assertTrue(
-            raiseBoxFaucet.getFaucetTotalSupply() != 0,
-            "Token Mint: Supply should equal amount minted"
-        );
+        raiseBoxFaucet.mintFaucetTokens(raiseBoxFaucetContractAddress, INITIAL_SUPPLY_MINTED);
+        assertTrue(raiseBoxFaucet.getFaucetTotalSupply() != 0, "Token Mint: Supply should equal amount minted");
     }
 }

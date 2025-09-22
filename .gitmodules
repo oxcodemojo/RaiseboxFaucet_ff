@@ -1,3 +1,10 @@
 [submodule "lib/openzeppelin-contracts"]
 	path = lib/openzeppelin-contracts
-	url = https://github.com/openzeppelin/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+
+	# [remote "origin"]
+	# 	url =https://github.com/oxcodemojo/RaiseboxFaucet_ff.git
+
+[submodule "lib/forge-std"]
+	path = lib/forge-std
+	url = https://github.com/foundry-rs/forge-std

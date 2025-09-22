@@ -9,13 +9,7 @@ contract DeployRaiseboxContract is Script {
 
     function run() public {
         vm.startBroadcast();
-        raiseBox = new RaiseBoxFaucet(
-            "raiseboxtoken",
-            "RBT",
-            1000 * 10 ** 18,
-            0.005 ether,
-            1 ether
-        );
+        raiseBox = new RaiseBoxFaucet("raiseboxtoken", "RBT", 1000 * 10 ** 18, 0.005 ether, 1 ether);
         vm.stopBroadcast();
     }
 }
